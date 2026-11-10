@@ -10,9 +10,11 @@
 - (list any documents beyond the assignment corpus, or "none")
 
 ## AI coding assistant disclosure
-- Claude Code (Anthropic, claude-sonnet-4-6) was used as a coding assistant during development. Specific uses: 
+- Claude Code (Anthropic, claude-sonnet-4-6)
+    - Used to streamline configuration updates when adapting the LLM integration to use Ollama's native /api/chat endpoint for llama3.2.
 
-    - llm.py was hardcoded to use Ollama's OpenAI-compatible /v1/chat/completions endpoint, but the project required the native /api/chat endpoint for llama3.2. Added _ollama_native() to src/rag/llm.py to handle Ollama's native request/response format, and updated the routing logic in chat() to select the correct path based on the configured base URL.
+- ChatGPT (OpenAI)
+    - Used ChatGPT as a reference to understand different chunking strategies and their potential trade-offs.
 
 ## One-line claim to fame
 - (the thing you are proudest of)
