@@ -26,7 +26,7 @@ load_dotenv()
 
 def answer(ret: Retriever, question: str, history: list[dict], top_k: int) -> tuple[str, list[dict]]:
     t0 = time.time()
-    hits = ret.search(question, top_k=int(os.getenv("TOP_K", 5)))
+    hits = ret.search(question, top_k=top_k)
     context = "\n\n".join(h["text"] + f"\n[source: {h['doc']} p.{h['page']}]" for h in hits)
     text = chat(question, context, history)
     print(f"[retrieval {(time.time()-t0)*1000:.0f} ms]")
@@ -72,6 +72,8 @@ def main() -> None:
             question = voice_question()
             if not question:
                 continue
+            if question.strip().lower() in {"quit", "exit", "stop"}:
+                break
         else:
             question = input("\nYou> ").strip()
             if not question:
