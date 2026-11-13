@@ -10,8 +10,8 @@ RAG chatbot for Indian Income Tax corpus with 4 interaction modes:
 | Member | Role | Email |
 |--------|------|-------|
 | Antika Burman | RAG pipeline development and embedding-based retrieval | 2023sl70005@wilp.bits-pilani.ac.in |
-| Rishav Raj Singh | --- | 2023sl70004@wilp.bits-pilani.ac.in |
-| Abhishek Gupta | --- | 2023sl70036@wilp.bits-pilani.ac.in |
+| Rishav Raj Singh | LLM provider integration and multi-backend support | 2023sl70004@wilp.bits-pilani.ac.in |
+| Abhishek Gupta | User interface design and interaction flow | 2023sl70036@wilp.bits-pilani.ac.in |
 | Subhadip Jana | RAG pipeline development and embedding-based retrieval | 2023sl70031@wilp.bits-pilani.ac.in |
 | Karan Banjade | Speech I/O integration (STT & TTS) | 2023sl70034@wilp.bits-pilani.ac.in |
 
