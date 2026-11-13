@@ -37,6 +37,8 @@ TIVO: TITO pipeline + sentence-chunked text-to-speech synthesis.
 VITO: press-Enter microphone recording → Whisper transcription → TITO.
 VIVO: VITO + TIVO; in-memory history is carried across turns for multi-turn conversations.
 
+![TITO mode — Q-M04 (VDA/crypto taxation): Rich-styled answer with inline source citations](images/tito_qm04_demo.png)
+
 ![VIVO mode — Q-M04 (VDA/crypto taxation): STT transcription, Rich-styled answer with inline sources](images/vivo_qm04_demo.png)
 
 ## Speech Components
