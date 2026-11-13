@@ -13,7 +13,7 @@ load_dotenv()
 TOKEN_RE = re.compile(r"[a-z0-9]{2,}")
 STOP = set("the a an and or of to in for on is are be with by from as at that this it".split())
 EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text:latest")
-EMBED_BASE_URL = os.getenv("SLM_BASE_URL", "http://localhost:11434/api")
+EMBED_BASE_URL = os.getenv("EMBED_BASE_URL", "http://localhost:11434/api")
 
 
 def _stem(t: str) -> str:

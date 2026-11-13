@@ -13,7 +13,7 @@ INDEX_PATH = Path(os.getenv("INDEX_DIR", "index"))
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 900))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 150))
 EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text:latest")
-EMBED_BASE_URL = os.getenv("SLM_BASE_URL", "http://localhost:11434/api")
+EMBED_BASE_URL = os.getenv("EMBED_BASE_URL", "http://localhost:11434/api")
 EMBED_BATCH = int(os.getenv("EMBED_BATCH", 32))
 
 
