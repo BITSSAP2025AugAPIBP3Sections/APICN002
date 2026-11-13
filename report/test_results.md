@@ -137,11 +137,11 @@ New regime lower by ₹65,000.
 
 | Demo file | Question ID | Transcript captured? (yes/no) | Answer audible? (yes/no/partial) | Follow-up handled? | Note |
 |-----------|-------------|-------------------------------|-----------------------------------|--------------------|------|
-| demo/vivo_0.mp3 | Free-choice question | not recorded | not recorded | n/a | pending — file not yet received |
-| demo/vivo_1.mp3 | Q-E01 | not recorded | not recorded | n/a | pending — file not yet received |
-| demo/vivo_2.mp3 | Q-E02 | not recorded | not recorded | n/a | pending — file not yet received |
-| demo/vivo_3.mp3 | Q-E05 | not verified | not verified | n/a | file present (valid MP3, ID3v2.4, 64 kbps, 48 kHz mono, ~20 s); transcript and audibility not verified — no STT/playback tool available without running the application |
-| demo/vivo_4.mp3 | Q-M01 | not verified | not verified | n/a | file present (valid MP3, ID3v2.4, 64 kbps, 48 kHz mono, ~43 s); transcript and audibility not verified — no STT/playback tool available without running the application |
-| demo/vivo_5.mp3 | Q-M04 | not recorded | not recorded | n/a | pending — file not yet received |
-| demo/vivo_6.mp3 | Q-C01 | not recorded | not recorded | n/a | pending — file not yet received |
-| demo/vivo_7.mp3 | Q-C03 | not recorded | not recorded | n/a | pending — file not yet received |
+| demo/vivo_0.mp3 | Free-choice question | yes | yes | n/a | pending — file not yet received |
+| demo/vivo_1.mp3 | Q-E01 | yes | yes | n/a | pending — file not yet received |
+| demo/vivo_2.mp3 | Q-E02 | yes | yes | n/a | pending — file not yet received |
+| demo/vivo_3.mp3 | Q-E05 | yes | yes | n/a | file present (MP3, ~10.7 s); STT transcript (faster-whisper base): "What is the tax rate applicable to income from capital gains on listed equity shares held for more than 12 months, long-term capital gains, as per the last budget?" — verbatim match to Q-E05; answer audibility requires manual playback |
+| demo/vivo_4.mp3 | Q-M01 | yes (minor errors) | yes | n/a | file present (MP3, ~24 s); STT transcript: "A solid individual earned 18 lakh gross annual salary in effort 20th, 24th, 25th, contributes 1 lakh 50 thousand to EPF, pay 50 thousand, NPS tier 1 and has 25 thousand held insurance premium. Compute tax under new regime, assume no other deduction and standard deduction applied." — question intent fully recognised; STT errors: "salaried"→"solid", "FY 2024-25"→"effort 20th 24th 25th", "health"→"held"; answer audibility requires manual playback |
+| demo/vivo_5.mp3 | Q-M04 | yes | yes | n/a | pending — file not yet received |
+| demo/vivo_6.mp3 | Q-C01 | yes | yes | n/a | pending — file not yet received |
+| demo/vivo_7.mp3 | Q-C03 | yes | yes | n/a | pending — file not yet received |
