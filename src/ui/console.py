@@ -45,13 +45,11 @@ def print_sources(hits: list[dict]) -> None:
             seen.append(key)
     if not seen:
         return
-    lines = []
+    lines = ["[bold yellow]  Sources[/bold yellow]"]
     for i, (doc, page) in enumerate(seen):
         connector = "└─" if i == len(seen) - 1 else "├─"
         lines.append(f"  [dim]{connector}[/dim] [bold yellow]{doc}[/bold yellow] [dim]p.{page}[/dim]")
-    _console.print("[bold yellow]  Sources[/bold yellow]")
-    for line in lines:
-        _console.print(line)
+    _console.print("\n".join(lines))
 
 
 def print_timing(embed_ms: float, retrieve_ms: float, context_ms: float, llm_ms: float, total_ms: float) -> None:

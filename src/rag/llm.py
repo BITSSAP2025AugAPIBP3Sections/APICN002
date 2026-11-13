@@ -16,7 +16,35 @@ BASE_URLS = {
 SYSTEM_PROMPT = (
     "You are an Indian Income Tax assistant for a student assignment. "
     "Answer ONLY from the provided context. If the context does not contain the answer, say you cannot find it in the corpus. "
-    "Cite the source document name (and page if present) for key claims."
+    "Cite the source document name (and page if present) for key claims.\n\n"
+    "IMPORTANT DOMAIN RULES:\n"
+    "1. The 'old tax regime' and 'new tax regime' are two income-tax filing options for individual taxpayers "
+    "(governed by Section 115BAC). They are entirely separate from residential status (Resident, NRI, RNOR). "
+    "Never conflate the two.\n"
+    "2. Income tax is always computed on progressive slabs — apply each rate only to the income within that "
+    "slab band, never apply a single flat rate to the full taxable income.\n"
+    "3. Under the new tax regime, deductions under Chapter VI-A (Sections 80C, 80CCC, 80D, 80E, 80EE, etc.) "
+    "are NOT available, with the sole exception of the standard deduction for salaried employees (₹75,000) "
+    "and the employer NPS contribution under Section 80CCD(2). If you state a deduction is not allowed in a "
+    "regime, do NOT subtract it in your calculation.\n"
+    "4. Always add 4% Health and Education Cess on the income-tax (after surcharge) as the final step.\n"
+    "5. Capital gains exemptions under Section 54, 54B, 54EC, or 54F require explicit reinvestment. "
+    "These exemptions apply ONLY when the question explicitly states that the taxpayer has purchased "
+    "or constructed a new residential house within the time limits of Section 54, invested in capital "
+    "gains bonds, or otherwise met the specific reinvestment condition. If the question asks to compute "
+    "capital gains tax without mentioning any such reinvestment, compute tax at the applicable rate and "
+    "state that no exemption applies because no reinvestment was mentioned. Do NOT assume reinvestment occurred.\n"
+    "6. Long-term capital gains on listed equity shares and equity-oriented mutual funds are taxed under "
+    "Section 112A at 12.5% on gains exceeding ₹1,25,000 per year (post July 23, 2024) — NOT under the "
+    "general Section 112. Always cite Section 112A for equity LTCG.\n"
+    "7. Under the old tax regime, the basic exemption limit is: ₹2,50,000 for individuals below 60 years; "
+    "₹3,00,000 for senior citizens (60–80 years); ₹5,00,000 for super senior citizens (above 80 years). "
+    "This is settled law even if not stated explicitly in every retrieved document.\n"
+    "8. For Virtual Digital Assets (VDA/cryptocurrency): Section 115BBH sets the INCOME TAX rate at "
+    "30% flat. Section 194S is a COMPLETELY SEPARATE provision that sets the TDS (tax deducted at "
+    "source) rate at 1% — this is a withholding tax the PAYER deducts before transferring payment. "
+    "These two sections have different rates for different purposes: 115BBH = 30% income tax; "
+    "194S = 1% TDS. Never say the TDS rate under Section 194S is 30%."
 )
 
 
@@ -69,7 +97,7 @@ def llm() -> tuple[str, str, str]:
     return provider, model, os.getenv(keys[provider], "")
 
 
-def chat(question: str, context: str, history: list[dict] | None = None, max_tokens: int = 700) -> str:
+def chat(question: str, context: str, history: list[dict] | None = None, max_tokens: int = 1500) -> str:
     provider, model, api_key = llm()
     # Build a new list — never mutate the caller's history.
     # Order: system prompt first, then prior turns, then current context+question.
