@@ -1,26 +1,41 @@
-# Submission — APICN001
+# Submission — APICN002
 
-- Team ID: APICN001
-- Attack vector used for evaluation: this repo
+- Team ID: APICN002
+- GitHub repository: https://github.com/BITSSAP2025AugAPIBP3Sections/APICN002
 - App entry point: `python src/app.py`
-- Default provider: SLM (Ollama via `http://localhost:11434/api`, default model `llama3.1:8b`)
-- STT engine: faster-whisper (default local) with Groq/OpenAI Whisper API options
+- Default LLM provider: SLM (Ollama, `llama3.2:latest` via `http://localhost:11434/v1`)
+- Embedding model: `nomic-embed-text:latest` via Ollama (`http://localhost:11434/api`)
+- STT engine: faster-whisper (default local, model: base) with Groq/OpenAI Whisper API options
 - TTS engine: pyttsx3 (default local) with Piper and Edge TTS options
 
 ## Feature completion
-- Speech in: Implemented in `vito` and `vivo` modes (`src/speech/stt.py`)
-- Speech out: Implemented in `tivo` and `vivo` modes (`src/speech/tts.py`)
-- Cross-platform playback handling: Added for macOS, Windows, and Linux
+
+- TITO: text question → RAG retrieval → LLM answer with source citations
+- TIVO: TITO + text-to-speech synthesis via configurable TTS provider
+- VITO: microphone → faster-whisper transcription → TITO
+- VIVO: VITO + TIVO; multi-turn conversation history maintained in session
+- RAG ingestion: atomic index writes; embedding retry with exponential backoff; validates count, dimension, and numeric correctness
+- Automated tests: 77 passing unit tests (ingestion pipeline, retrieval, history management, speech cleanup)
 
 ## External data used
-- None
+
+- None. All source documents are official Indian government publications included in `data/`.
+- Income Tax Act 1961 (~171 MB) is distributed via GitHub Release assets due to file-size limits; all other PDFs are committed to the repository.
 
 ## AI coding assistant disclosure
+
 - Claude Code (Anthropic, claude-sonnet-4-6)
-    - Used to streamline configuration updates when adapting the LLM integration to use Ollama's native /api/chat endpoint for llama3.2.
+    - Session 1: Streamlined configuration updates when adapting the LLM integration to use Ollama's native /api/chat endpoint for llama3.2.
+    - Session 2: Improved ingestion pipeline — atomic index writes, embedding retry/validation, memory-optimised page-by-page PDF extraction, comprehensive test suite (44 tests), .gitignore corpus strategy.
+    - Session 4: Added mandatory corpus validation to ingestion (fail on missing/unreadable required PDFs, non-zero exit); split latency timing into embed/retrieve/context/LLM in app.py; tightened retriever validation (2D check, zero-norm raise, query NaN/zero check); fixed .gitignore to track all small corpus PDFs; corrected documentation inaccuracies in architecture.md and latency_results.md; test suite now at 77 tests.
 
 - ChatGPT (OpenAI)
-    - Used ChatGPT as a reference to understand different chunking strategies and their potential trade-offs.
+    - Used as a reference to understand different chunking strategies and their potential trade-offs.
+
+## Rubric discrepancy note
+
+The grading rubric's base components (TITO 30 + Structure 10 + RAG 15 + Modes 15 + Latency 10 + Docs 5 + Demo 5 + Integrity 5) sum to 95, not the stated total of 100. The source of the remaining 5 marks is not specified in the rubric as provided. This discrepancy is flagged for instructor clarification.
 
 ## One-line claim to fame
-- Built a single RAG app that supports all four interaction modes (TITO, TIVO, VITO, VIVO) with swappable LLM/STT/TTS providers.
+
+Single RAG app supporting all four interaction modes (TITO, TIVO, VITO, VIVO) with a hardened, atomic ingestion pipeline, swappable LLM/STT/TTS providers, and 77 automated tests.

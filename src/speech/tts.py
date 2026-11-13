@@ -40,13 +40,19 @@ def _speak_piper(text: str) -> None:
         raise RuntimeError("TTS_VOICE must be set to a piper model path when TTS_PROVIDER=piper")
     fd, output = tempfile.mkstemp(suffix=".wav")
     os.close(fd)
-    proc = subprocess.run(
-        ["piper", "--model", model, "--output_file", output],
-        input=text.encode("utf-8"),
-        check=False,
-    )
-    if proc.returncode == 0:
-        _play_audio(output)
+    try:
+        proc = subprocess.run(
+            ["piper", "--model", model, "--output_file", output],
+            input=text.encode("utf-8"),
+            check=False,
+        )
+        if proc.returncode == 0:
+            _play_audio(output)
+    finally:
+        try:
+            os.unlink(output)
+        except OSError:
+            pass
 
 
 def _speak_edge(text: str) -> None:
@@ -54,8 +60,14 @@ def _speak_edge(text: str) -> None:
 
     async def run():
         path = os.path.join(tempfile.gettempdir(), f"out_{datetime.now().strftime('%H%M%S')}.mp3")
-        await edge_tts.Communicate(text, os.getenv("TTS_VOICE", "en-IN-NeerjaNeural")).save(path)
-        _play_audio(path)
+        try:
+            await edge_tts.Communicate(text, os.getenv("TTS_VOICE", "en-IN-NeerjaNeural")).save(path)
+            _play_audio(path)
+        finally:
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
 
     import asyncio
 

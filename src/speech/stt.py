@@ -60,34 +60,40 @@ def transcribe(wav_path: str | None) -> str | None:
     provider = os.getenv("STT_PROVIDER", "local")
     if wav_path is None:
         return None
-    if provider in ("groq", "openai"):
-        import requests
+    try:
+        if provider in ("groq", "openai"):
+            import requests
 
-        url = (
-            "https://api.groq.com/openai/v1/audio/transcriptions"
-            if provider == "groq"
-            else "https://api.openai.com/v1/audio/transcriptions"
-        )
-        label = "whisper-large-v3-turbo" if provider == "groq" else "whisper-1"
-        with open(wav_path, "rb") as audio_file:
-            resp = requests.post(
-                url,
-                headers={"Authorization": f"Bearer {os.getenv('GROQ_API_KEY' if provider == 'groq' else 'OPENAI_API_KEY', '')}"},
-                files={"file": audio_file},
-                data={"model": label},
-                timeout=120,
+            url = (
+                "https://api.groq.com/openai/v1/audio/transcriptions"
+                if provider == "groq"
+                else "https://api.openai.com/v1/audio/transcriptions"
             )
-        resp.raise_for_status()
-        return resp.json()["text"]
-    from faster_whisper import WhisperModel
+            label = "whisper-large-v3-turbo" if provider == "groq" else "whisper-1"
+            with open(wav_path, "rb") as audio_file:
+                resp = requests.post(
+                    url,
+                    headers={"Authorization": f"Bearer {os.getenv('GROQ_API_KEY' if provider == 'groq' else 'OPENAI_API_KEY', '')}"},
+                    files={"file": audio_file},
+                    data={"model": label},
+                    timeout=120,
+                )
+            resp.raise_for_status()
+            return resp.json()["text"]
+        from faster_whisper import WhisperModel
 
-    global _ever_initialized, _model
-    t0 = time.time()
-    if _model is None:
-        _model = WhisperModel(os.getenv("STT_MODEL", "base"), device="auto", compute_type="auto")
-    first = "" if _ever_initialized else f" (load {time.time()-t0:.1f}s)"
-    _ever_initialized = True
-    segments, _info = _model.transcribe(wav_path)
-    text = " ".join(s.text for s in segments)
-    print(f"  [stt{first}] {text}")
-    return text
+        global _ever_initialized, _model
+        t0 = time.time()
+        if _model is None:
+            _model = WhisperModel(os.getenv("STT_MODEL", "base"), device="auto", compute_type="auto")
+        first = "" if _ever_initialized else f" (load {time.time()-t0:.1f}s)"
+        _ever_initialized = True
+        segments, _info = _model.transcribe(wav_path)
+        text = " ".join(s.text for s in segments)
+        print(f"  [stt{first}] {text}")
+        return text
+    finally:
+        try:
+            os.unlink(wav_path)
+        except OSError:
+            pass

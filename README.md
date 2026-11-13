@@ -1,4 +1,4 @@
-# APICN001 - RAG VoiceBot
+# APICN002 - RAG VoiceBot
 
 RAG chatbot for Indian Income Tax corpus with 4 interaction modes:
 - TITO: text input -> text output

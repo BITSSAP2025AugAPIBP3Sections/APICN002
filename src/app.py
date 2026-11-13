@@ -1,4 +1,4 @@
-"""APICN000 reference skeleton: TITO / TIVO / VITO / VIVO RAG chatbot.
+"""APICN002 RAG Income Tax VoiceBot: TITO / TIVO / VITO / VIVO modes.
 
 Modes:
   python src/app.py --mode tito          typed question -> typed answer
@@ -25,11 +25,26 @@ load_dotenv()
 
 
 def answer(ret: Retriever, question: str, history: list[dict], top_k: int) -> tuple[str, list[dict]]:
-    t0 = time.time()
+    t0 = time.perf_counter()
     hits = ret.search(question, top_k=top_k)
+    t1 = time.perf_counter()
     context = "\n\n".join(h["text"] + f"\n[source: {h['doc']} p.{h['page']}]" for h in hits)
+    t2 = time.perf_counter()
     text = chat(question, context, history)
-    print(f"[retrieval {(time.time()-t0)*1000:.0f} ms]")
+    t3 = time.perf_counter()
+
+    embed_ms = getattr(ret, "_t_embed_ms", (t1 - t0) * 1000)
+    search_ms = getattr(ret, "_t_search_ms", 0.0)
+    context_ms = (t2 - t1) * 1000
+    llm_ms = (t3 - t2) * 1000
+    total_ms = (t3 - t0) * 1000
+    print(
+        f"[timing]  embed {embed_ms:.0f} ms | "
+        f"retrieve {search_ms:.0f} ms | "
+        f"context {context_ms:.0f} ms | "
+        f"LLM {llm_ms:.0f} ms | "
+        f"total {total_ms:.0f} ms"
+    )
     return text, hits
 
 
