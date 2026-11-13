@@ -1,6 +1,8 @@
 import os
+import platform
 import re
 import subprocess
+import tempfile
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -21,36 +23,46 @@ def _speak_pyttsx3(text: str) -> None:
     engine.runAndWait()
 
 
+def _play_audio(path: str) -> None:
+    system = platform.system().lower()
+    if system == "darwin":
+        subprocess.run(["afplay", path], check=False)
+    elif system == "windows":
+        subprocess.run(["cmd", "/c", "start", "", path], check=False)
+    else:
+        subprocess.run(["aplay", path], check=False)
+
+
 def _speak_piper(text: str) -> None:
-    """Stream to the piper CLI: piper --model <TTS_VOICE.wav> --output_file - | aplay."""
-    proc = subprocess.Popen(
-        ["piper", "--model", os.getenv("TTS_VOICE", "")],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-    )
-    proc.communicate(text.encode())
-    subprocess.run(
-        # aplay on linux, ffplay as fallback
-        ["aplay", "-"],
-        input=proc.stdout,
+    """Synthesize with piper CLI and play with the system audio player."""
+    model = os.getenv("TTS_VOICE", "")
+    if not model:
+        raise RuntimeError("TTS_VOICE must be set to a piper model path when TTS_PROVIDER=piper")
+    fd, output = tempfile.mkstemp(suffix=".wav")
+    os.close(fd)
+    proc = subprocess.run(
+        ["piper", "--model", model, "--output_file", output],
+        input=text.encode("utf-8"),
         check=False,
     )
+    if proc.returncode == 0:
+        _play_audio(output)
 
 
 def _speak_edge(text: str) -> None:
     import edge_tts
 
     async def run():
-        path = f"out_{datetime.now().strftime('%H%M%S')}.mp3"
+        path = os.path.join(tempfile.gettempdir(), f"out_{datetime.now().strftime('%H%M%S')}.mp3")
         await edge_tts.Communicate(text, os.getenv("TTS_VOICE", "en-IN-NeerjaNeural")).save(path)
-        subprocess.run(["start", path], shell=True, check=False)  # windows default player
+        _play_audio(path)
 
     import asyncio
 
     asyncio.run(run())
 
 
-_SENTENCE = re.compile(r"[^.!?]+\.[^.!?]*\.")
+_SENTENCE = re.compile(r"[^.!?]+[.!?]")
 
 
 def speak(text: str, sentence_chunked: bool = True) -> None:
