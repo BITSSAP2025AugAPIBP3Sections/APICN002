@@ -8,7 +8,9 @@ soundfile>=0.12
 faster-whisper>=1.0
 av>=11,<19
 pyttsx3>=2.90 ; sys_platform == "win32" or sys_platform == "darwin"
+pypdf>=3.0
 arize-phoenix>=4.0
 arize-phoenix-otel>=0.6
+opentelemetry-api>=1.20
 # Voice extras — install what you need:
 # pip install faster-whisper sounddevice piper-tts edge-tts
