@@ -2,6 +2,7 @@ import json
 import math
 import os
 import re
+import time
 from pathlib import Path
 
 import numpy as np
@@ -13,7 +14,7 @@ load_dotenv()
 TOKEN_RE = re.compile(r"[a-z0-9]{2,}")
 STOP = set("the a an and or of to in for on is are be with by from as at that this it".split())
 EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text:latest")
-EMBED_BASE_URL = os.getenv("SLM_BASE_URL", "http://localhost:11434/api")
+EMBED_BASE_URL = os.getenv("EMBED_BASE_URL", "http://localhost:11434/api")
 
 
 def _stem(t: str) -> str:
@@ -34,8 +35,24 @@ class Retriever:
         emb_path = index_dir / "embeddings.npy"
         if emb_path.exists():
             emb = np.load(emb_path)
-            norms = np.linalg.norm(emb, axis=1, keepdims=True)
-            self.embeddings = emb / (norms + 1e-9)
+            if emb.ndim != 2:
+                raise ValueError(
+                    f"Index corrupt: expected 2-D embedding matrix, got shape {emb.shape}"
+                )
+            if emb.shape[0] != len(self.records):
+                raise ValueError(
+                    f"Index corrupt: {emb.shape[0]} embeddings but {len(self.records)} chunks"
+                )
+            if not np.isfinite(emb).all():
+                raise ValueError("Index corrupt: embeddings contain NaN or Inf values")
+            norms = np.linalg.norm(emb, axis=1)
+            zero_rows = np.where(norms < 1e-9)[0]
+            if len(zero_rows):
+                raise ValueError(
+                    f"Index corrupt: {len(zero_rows)} zero-norm embedding row(s) at indices "
+                    f"{zero_rows[:5].tolist()} — re-run ingestion to rebuild the index"
+                )
+            self.embeddings = emb / (norms.reshape(-1, 1) + 1e-9)
             self.use_embeddings = True
             print(f"[retriever] embedding mode ({len(self.records)} chunks)")
         else:
@@ -57,6 +74,7 @@ class Retriever:
         self.postings = postings
 
     def _embed_query(self, query: str) -> np.ndarray:
+        t0 = time.perf_counter()
         resp = requests.post(
             f"{EMBED_BASE_URL}/embed",
             json={"model": EMBED_MODEL, "input": query},
@@ -64,13 +82,30 @@ class Retriever:
         )
         resp.raise_for_status()
         vec = np.array(resp.json()["embeddings"][0], dtype=np.float32)
-        return vec / (np.linalg.norm(vec) + 1e-9)
+        self._t_embed_ms = (time.perf_counter() - t0) * 1000
+        if not np.isfinite(vec).all():
+            raise ValueError("Query embedding contains NaN or Inf values")
+        norm = np.linalg.norm(vec)
+        if norm < 1e-9:
+            raise ValueError("Query embedding is a zero vector; cannot compute cosine similarity")
+        return vec / norm
 
     def search(self, query: str, top_k: int = 5) -> list[dict]:
+        if top_k <= 0:
+            raise ValueError(f"top_k must be positive, got {top_k}")
+        self._t_embed_ms = 0.0
+        self._t_search_ms = 0.0
         if self.use_embeddings:
-            q = self._embed_query(query)
+            q = self._embed_query(query)  # sets _t_embed_ms
+            if q.shape[0] != self.embeddings.shape[1]:
+                raise ValueError(
+                    f"Query embedding dimension {q.shape[0]} does not match "
+                    f"corpus dimension {self.embeddings.shape[1]}"
+                )
+            t_s = time.perf_counter()
             scores = self.embeddings @ q
             best = np.argsort(scores)[::-1][:top_k]
+            self._t_search_ms = (time.perf_counter() - t_s) * 1000
             return [{**self.records[i], "score": round(float(scores[i]), 4)} for i in best]
 
         scores: dict[int, float] = {}

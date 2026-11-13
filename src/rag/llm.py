@@ -71,11 +71,13 @@ def llm() -> tuple[str, str, str]:
 
 def chat(question: str, context: str, history: list[dict] | None = None, max_tokens: int = 700) -> str:
     provider, model, api_key = llm()
-    messages = history or []
-    messages += [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": f"Context from corpus:\n{context}\n\nQuestion: {question}"},
-    ]
+    # Build a new list — never mutate the caller's history.
+    # Order: system prompt first, then prior turns, then current context+question.
+    messages = (
+        [{"role": "system", "content": SYSTEM_PROMPT}]
+        + list(history or [])
+        + [{"role": "user", "content": f"Context from corpus:\n{context}\n\nQuestion: {question}"}]
+    )
     if provider == "anthropic":
         return _anthropic(api_key, model, messages, max_tokens)
     base = BASE_URLS[provider]
