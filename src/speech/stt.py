@@ -103,7 +103,14 @@ def np_stack(frames):
     return np.concatenate(frames, axis=0) if frames else np.zeros((0, 1), dtype="int16")
 
 
-def transcribe(wav_path: str | None) -> str | None:
+def transcribe(wav_path: str | None, *, delete_after: bool = True) -> str | None:
+    """Transcribe audio at *wav_path* and return the text.
+
+    *delete_after* controls whether the input file is removed when done.
+    Pass ``delete_after=False`` to preserve a permanent recording.
+    The default (``True``) preserves the existing behaviour for the
+    temporary WAV files produced by :func:`record_to_wav`.
+    """
     provider = os.getenv("STT_PROVIDER", "local")
     if wav_path is None:
         return None
@@ -123,7 +130,11 @@ def transcribe(wav_path: str | None) -> str | None:
                 if provider == "groq"
                 else "https://api.openai.com/v1/audio/transcriptions"
             )
-            label = "whisper-large-v3-turbo" if provider == "groq" else "whisper-1"
+            label = (
+                os.getenv("STT_GROQ_MODEL", "whisper-large-v3-turbo")
+                if provider == "groq"
+                else "whisper-1"
+            )
 
             for attempt in range(2):
                 try:
@@ -166,7 +177,8 @@ def transcribe(wav_path: str | None) -> str | None:
         print(f"  [stt{first}] {text}")
         return text
     finally:
-        try:
-            os.unlink(wav_path)
-        except OSError:
-            pass
+        if delete_after:
+            try:
+                os.unlink(wav_path)
+            except OSError:
+                pass
