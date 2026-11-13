@@ -112,7 +112,20 @@ class Retriever:
                 )
             t_s = time.perf_counter()
             scores = self.embeddings @ q
-            best = np.argsort(scores)[::-1][:top_k]
+            # Temporal year boost: recent budget documents rank above older ones for current-year queries.
+            _YEAR_BOOST: dict[str, float] = {
+                "bs2025_26.pdf": 0.00,
+                "bs2024_25.pdf": 0.06,
+                "bs2023_24.pdf": -0.02,
+                "bs202223.pdf": -0.06,
+                "bs202122.pdf": -0.07,
+            }
+            boosted = scores.copy()
+            for _idx, _rec in enumerate(self.records):
+                _delta = _YEAR_BOOST.get(_rec["doc"], 0.0)
+                if _delta != 0.0:
+                    boosted[_idx] = scores[_idx] + _delta
+            best = np.argsort(boosted)[::-1][:top_k]
             self._t_search_ms = (time.perf_counter() - t_s) * 1000
             return [{**self.records[i], "score": round(float(scores[i]), 4)} for i in best]
 

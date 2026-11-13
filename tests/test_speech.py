@@ -405,6 +405,105 @@ class TestSTTTranscription(unittest.TestCase):
         self.assertEqual(mock_requests.post.call_count, 2)
         self.assertFalse(os.path.exists(wav_path))
 
+    def test_groq_model_configurable_via_env_var(self):
+        wav_path = _make_temp_file(".wav")
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.json.return_value = {"text": "custom model test"}
+        mock_requests = MagicMock()
+        mock_requests.ConnectionError = ConnectionError
+        mock_requests.Timeout = TimeoutError
+        mock_requests.post.return_value = mock_resp
+
+        with (
+            patch.dict(sys.modules, {"requests": mock_requests}),
+            patch.dict(os.environ, {
+                "STT_PROVIDER": "groq",
+                "GROQ_API_KEY": "test-key",
+                "STT_GROQ_MODEL": "whisper-large-v3-custom",
+            }),
+        ):
+            result = stt_mod.transcribe(wav_path)
+
+        self.assertEqual(result, "custom model test")
+        _, call_kwargs = mock_requests.post.call_args
+        data_sent = call_kwargs.get("data", {})
+        self.assertEqual(
+            data_sent.get("model"), "whisper-large-v3-custom",
+            "STT_GROQ_MODEL env var must control the model label sent to Groq",
+        )
+
+
+class TestSTTDeleteAfterParameter(unittest.TestCase):
+    """Tests for the delete_after keyword argument of transcribe()."""
+
+    def setUp(self):
+        stt_mod._model = None
+        stt_mod._ever_initialized = False
+
+    def _local_mock(self, text: str = "hello"):
+        mock_segment = MagicMock()
+        mock_segment.text = text
+        mock_model = MagicMock()
+        mock_model.transcribe.return_value = ([mock_segment], MagicMock())
+        mock_whisper_mod = MagicMock()
+        mock_whisper_mod.WhisperModel.return_value = mock_model
+        return mock_whisper_mod
+
+    def test_delete_after_true_explicit_deletes_file_on_success(self):
+        wav_path = _make_temp_file(".wav")
+        with (
+            patch.dict(sys.modules, {"faster_whisper": self._local_mock()}),
+            patch.dict(os.environ, {"STT_PROVIDER": "local"}),
+        ):
+            stt_mod.transcribe(wav_path, delete_after=True)
+        self.assertFalse(os.path.exists(wav_path))
+
+    def test_delete_after_true_deletes_file_on_failure(self):
+        wav_path = _make_temp_file(".wav")
+        mock_whisper_mod = MagicMock()
+        mock_whisper_mod.WhisperModel.side_effect = RuntimeError("GPU OOM")
+        with (
+            patch.dict(sys.modules, {"faster_whisper": mock_whisper_mod}),
+            patch.dict(os.environ, {"STT_PROVIDER": "local"}),
+        ):
+            with self.assertRaises(RuntimeError):
+                stt_mod.transcribe(wav_path, delete_after=True)
+        self.assertFalse(os.path.exists(wav_path))
+
+    def test_delete_after_false_preserves_file_on_success(self):
+        wav_path = _make_temp_file(".wav")
+        try:
+            with (
+                patch.dict(sys.modules, {"faster_whisper": self._local_mock()}),
+                patch.dict(os.environ, {"STT_PROVIDER": "local"}),
+            ):
+                stt_mod.transcribe(wav_path, delete_after=False)
+            self.assertTrue(os.path.exists(wav_path), "file must be kept when delete_after=False")
+        finally:
+            try:
+                os.unlink(wav_path)
+            except OSError:
+                pass
+
+    def test_delete_after_false_preserves_file_on_failure(self):
+        wav_path = _make_temp_file(".wav")
+        mock_whisper_mod = MagicMock()
+        mock_whisper_mod.WhisperModel.side_effect = RuntimeError("GPU OOM")
+        try:
+            with (
+                patch.dict(sys.modules, {"faster_whisper": mock_whisper_mod}),
+                patch.dict(os.environ, {"STT_PROVIDER": "local"}),
+            ):
+                with self.assertRaises(RuntimeError):
+                    stt_mod.transcribe(wav_path, delete_after=False)
+            self.assertTrue(os.path.exists(wav_path), "file must be kept when delete_after=False even on failure")
+        finally:
+            try:
+                os.unlink(wav_path)
+            except OSError:
+                pass
+
 
 class TestSTTRecording(unittest.TestCase):
     """Tests for record_to_wav() reliability and resource cleanup."""

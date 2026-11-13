@@ -72,8 +72,8 @@ class TestPrintSourcesDeduplication:
         ]
         with patch.object(_console, "print") as mock_print:
             console_mod.print_sources(hits)
-        # header + 1 entry line = 2 calls, not 3
-        assert mock_print.call_count == 2
+        # deduplicated to 1 unique source → exactly 1 combined print call
+        assert mock_print.call_count == 1
 
     def test_different_pages_of_same_doc_both_shown(self):
         hits = [
