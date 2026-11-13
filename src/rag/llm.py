@@ -2,6 +2,7 @@ import os
 
 import requests
 from dotenv import load_dotenv
+from opentelemetry import trace as _otel
 
 load_dotenv()
 
@@ -106,9 +107,18 @@ def chat(question: str, context: str, history: list[dict] | None = None, max_tok
         + list(history or [])
         + [{"role": "user", "content": f"Context from corpus:\n{context}\n\nQuestion: {question}"}]
     )
-    if provider == "anthropic":
-        return _anthropic(api_key, model, messages, max_tokens)
-    base = BASE_URLS[provider]
-    if base.rstrip("/").endswith("/api"):
-        return _ollama_native(base, model, messages, max_tokens)
-    return _openai_compatible(base, api_key or "ollama", model, messages, max_tokens)
+    with _otel.get_tracer("apicn002.rag").start_as_current_span("llm.chat") as span:
+        span.set_attribute("openinference.span.kind", "LLM")
+        span.set_attribute("input.value", question)
+        span.set_attribute("llm.model_name", model)
+        span.set_attribute("llm.provider", provider)
+        if provider == "anthropic":
+            reply = _anthropic(api_key, model, messages, max_tokens)
+        else:
+            base = BASE_URLS[provider]
+            if base.rstrip("/").endswith("/api"):
+                reply = _ollama_native(base, model, messages, max_tokens)
+            else:
+                reply = _openai_compatible(base, api_key or "ollama", model, messages, max_tokens)
+        span.set_attribute("output.value", reply[:2000])
+    return reply
