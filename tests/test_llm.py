@@ -164,5 +164,70 @@ class TestProviderRouting(_ChatHelper):
         self.assertEqual(msgs[-1]["role"], "user")
 
 
+class TestLLMProviderSelection(unittest.TestCase):
+    """Tests for the llm() provider/model/key selection function."""
+
+    def test_default_provider_is_slm(self):
+        with patch.dict("os.environ", {"LLM_PROVIDER": ""}, clear=False):
+            import os
+            os.environ.pop("LLM_PROVIDER", None)
+            provider, _, _ = llm_mod.llm()
+        self.assertEqual(provider, "slm")
+
+    def test_explicit_provider_returned(self):
+        for p in ("groq", "openai", "anthropic", "openrouter", "slm"):
+            with patch.dict("os.environ", {"LLM_PROVIDER": p}):
+                provider, _, _ = llm_mod.llm()
+            self.assertEqual(provider, p)
+
+    def test_unknown_provider_raises_system_exit(self):
+        with patch.dict("os.environ", {"LLM_PROVIDER": "unknown_xyz"}):
+            with self.assertRaises(SystemExit):
+                llm_mod.llm()
+
+    def test_default_model_slm(self):
+        with patch.dict("os.environ", {"LLM_PROVIDER": "slm"}, clear=False):
+            os_env = {"LLM_PROVIDER": "slm"}
+            if "LLM_MODEL" in __import__("os").environ:
+                __import__("os").environ.pop("LLM_MODEL")
+            with patch.dict("os.environ", os_env):
+                _, model, _ = llm_mod.llm()
+        self.assertEqual(model, "llama3.1:8b")
+
+    def test_default_model_groq(self):
+        with patch.dict("os.environ", {"LLM_PROVIDER": "groq", "LLM_MODEL": ""}):
+            _, model, _ = llm_mod.llm()
+        self.assertEqual(model, "llama-3.3-70b-versatile")
+
+    def test_default_model_openai(self):
+        with patch.dict("os.environ", {"LLM_PROVIDER": "openai", "LLM_MODEL": ""}):
+            _, model, _ = llm_mod.llm()
+        self.assertEqual(model, "gpt-4o-mini")
+
+    def test_default_model_anthropic(self):
+        with patch.dict("os.environ", {"LLM_PROVIDER": "anthropic", "LLM_MODEL": ""}):
+            _, model, _ = llm_mod.llm()
+        self.assertEqual(model, "claude-3-5-haiku-20241022")
+
+    def test_custom_model_overrides_default(self):
+        with patch.dict("os.environ", {"LLM_PROVIDER": "groq", "LLM_MODEL": "my-custom-model"}):
+            _, model, _ = llm_mod.llm()
+        self.assertEqual(model, "my-custom-model")
+
+    def test_api_key_read_for_groq(self):
+        with patch.dict("os.environ", {"LLM_PROVIDER": "groq", "GROQ_API_KEY": "test-key-123"}):
+            _, _, key = llm_mod.llm()
+        self.assertEqual(key, "test-key-123")
+
+    def test_missing_api_key_returns_empty_string(self):
+        import os
+        env = {"LLM_PROVIDER": "groq"}
+        # Ensure the key is absent
+        with patch.dict("os.environ", env):
+            os.environ.pop("GROQ_API_KEY", None)
+            _, _, key = llm_mod.llm()
+        self.assertEqual(key, "")
+
+
 if __name__ == "__main__":
     unittest.main()

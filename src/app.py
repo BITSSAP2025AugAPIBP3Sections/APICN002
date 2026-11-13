@@ -23,6 +23,13 @@ from rag.retriever import Retriever  # noqa: E402
 
 load_dotenv()
 
+try:
+    from ui import console as ui
+    _rich = True
+except ImportError:
+    ui = None  # type: ignore[assignment]
+    _rich = False
+
 
 def answer(ret: Retriever, question: str, history: list[dict], top_k: int) -> tuple[str, list[dict]]:
     t0 = time.perf_counter()
@@ -38,23 +45,30 @@ def answer(ret: Retriever, question: str, history: list[dict], top_k: int) -> tu
     context_ms = (t2 - t1) * 1000
     llm_ms = (t3 - t2) * 1000
     total_ms = (t3 - t0) * 1000
-    print(
-        f"[timing]  embed {embed_ms:.0f} ms | "
-        f"retrieve {search_ms:.0f} ms | "
-        f"context {context_ms:.0f} ms | "
-        f"LLM {llm_ms:.0f} ms | "
-        f"total {total_ms:.0f} ms"
-    )
+    if os.getenv("SHOW_TIMING"):
+        if _rich:
+            ui.print_timing(embed_ms, search_ms, context_ms, llm_ms, total_ms)
+        else:
+            print(
+                f"[timing]  embed {embed_ms:.0f} ms | "
+                f"retrieve {search_ms:.0f} ms | "
+                f"context {context_ms:.0f} ms | "
+                f"LLM {llm_ms:.0f} ms | "
+                f"total {total_ms:.0f} ms"
+            )
     return text, hits
 
 
 def cite_sources(hits: list[dict]) -> None:
-    seen = []
-    for h in hits:
-        key = f"{h['doc']} p.{h['page']}"
-        if key not in seen:
-            seen.append(key)
-    print("Sources: " + "; ".join(seen))
+    if _rich:
+        ui.print_sources(hits)
+    else:
+        seen = []
+        for h in hits:
+            key = f"{h['doc']} p.{h['page']}"
+            if key not in seen:
+                seen.append(key)
+        print("Sources: " + "; ".join(seen))
 
 
 def voice_question() -> str | None:
@@ -72,6 +86,8 @@ def main() -> None:
     ret = Retriever(os.getenv("INDEX_DIR", "index"))
     history: list[dict] = []
 
+    if not args.question and _rich:
+        ui.print_startup(args.mode)
     if args.question:
         text, hits = answer(ret, args.question, history, int(os.getenv("TOP_K", 5)))
         print(text)
@@ -90,13 +106,20 @@ def main() -> None:
             if question.strip().lower() in {"quit", "exit", "stop"}:
                 break
         else:
-            question = input("\nYou> ").strip()
+            if _rich:
+                ui.print_rule()
+                question = ui.ask_user()
+            else:
+                question = input("\nYou> ").strip()
             if not question:
                 break
             if question.lower() in {"quit", "exit"}:
                 break
         text, hits = answer(ret, question, history, int(os.getenv("TOP_K", 5)))
-        print(f"\nBot> {text}")
+        if _rich:
+            ui.print_bot(text)
+        else:
+            print(f"\nBot> {text}")
         cite_sources(hits)
         history += [
             {"role": "user", "content": question},

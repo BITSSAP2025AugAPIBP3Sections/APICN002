@@ -9,10 +9,10 @@ RAG chatbot for Indian Income Tax corpus with 4 interaction modes:
 ## Team
 | Member | Role | Email |
 |--------|------|-------|
-| Antika Burman | RAG pipeline development and embedding-based retrieval | 2023sl70005@wilp.bits-pilani.ac.in |
+| Antika Burman | RAG pipeline development, refinement and embedding-based retrieval | 2023sl70005@wilp.bits-pilani.ac.in |
 | Rishav Raj Singh | LLM provider integration and multi-backend support | 2023sl70004@wilp.bits-pilani.ac.in |
-| Abhishek Gupta | User interface design and interaction flow | 2023sl70036@wilp.bits-pilani.ac.in |
-| Subhadip Jana | RAG pipeline development and embedding-based retrieval | 2023sl70031@wilp.bits-pilani.ac.in |
+| Abhishek Gupta | CLI interface design and implementation | 2023sl70036@wilp.bits-pilani.ac.in |
+| Subhadip Jana | RAG pipeline development, refinement and embedding-based retrieval | 2023sl70031@wilp.bits-pilani.ac.in |
 | Karan Banjade | Speech I/O integration (STT & TTS) | 2023sl70034@wilp.bits-pilani.ac.in |
 
 ## Setup
@@ -81,4 +81,6 @@ RAG chatbot for Indian Income Tax corpus with 4 interaction modes:
 
 ## Notes
 - Voice modes depend on microphone access and OS audio playback.
-- In voice-input modes, saying or dictating `quit`, `exit`, or `stop` will end the app loop.
+- In text-input modes (TITO/TIVO), type `quit` or `exit`, or press **Enter** on an empty line, to stop the app.
+- In voice-input modes (VITO/VIVO), say `quit`, `exit`, or `stop` to end the app loop.
+- Set `SHOW_TIMING=1` in your shell to display per-request latency breakdowns (hidden by default).
