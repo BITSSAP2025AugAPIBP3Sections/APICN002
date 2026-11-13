@@ -15,7 +15,7 @@
 - VITO: microphone → faster-whisper transcription → TITO
 - VIVO: VITO + TIVO; multi-turn conversation history maintained in session
 - RAG ingestion: atomic index writes; embedding retry with exponential backoff; validates count, dimension, and numeric correctness
-- Automated tests: 77 passing unit tests (ingestion pipeline, retrieval, history management, speech cleanup)
+- Automated tests: 96 passing unit tests (ingestion pipeline, retrieval, history management, speech cleanup, STT transcription behaviour, STT recording reliability)
 
 ## External data used
 
@@ -28,6 +28,7 @@
     - Session 1: Streamlined configuration updates when adapting the LLM integration to use Ollama's native /api/chat endpoint for llama3.2.
     - Session 2: Improved ingestion pipeline — atomic index writes, embedding retry/validation, memory-optimised page-by-page PDF extraction, comprehensive test suite (44 tests), .gitignore corpus strategy.
     - Session 4: Added mandatory corpus validation to ingestion (fail on missing/unreadable required PDFs, non-zero exit); split latency timing into embed/retrieve/context/LLM in app.py; tightened retriever validation (2D check, zero-norm raise, query NaN/zero check); fixed .gitignore to track all small corpus PDFs; corrected documentation inaccuracies in architecture.md and latency_results.md; test suite now at 77 tests.
+    - Session 5: Improved STT reliability — timeout on recording loop queue get (prevents indefinite block when audio callback stops), early catch for audio device errors, temp-file cleanup on sf.write failure, minimum recording duration guard (0.3 s), drain of pre-start audio, early API-key validation with descriptive error, single retry on transient API errors (429/5xx/ConnectionError/Timeout) without retrying permanent 4xx, API response structure validation; fixed fixed-duration recording (seconds= mode) so frames are collected during the deadline rather than after running=False; handle stream __enter__ failure; inspect and log callback status warnings; test suite now at 96 tests.
 
 - ChatGPT (OpenAI)
     - Used as a reference to understand different chunking strategies and their potential trade-offs.
@@ -38,4 +39,4 @@ The grading rubric's base components (TITO 30 + Structure 10 + RAG 15 + Modes 15
 
 ## One-line claim to fame
 
-Single RAG app supporting all four interaction modes (TITO, TIVO, VITO, VIVO) with a hardened, atomic ingestion pipeline, swappable LLM/STT/TTS providers, and 77 automated tests.
+Single RAG app supporting all four interaction modes (TITO, TIVO, VITO, VIVO) with a hardened, atomic ingestion pipeline, reliable STT with retry and resource cleanup, swappable LLM/STT/TTS providers, and 96 automated tests.
