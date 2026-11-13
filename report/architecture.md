@@ -46,3 +46,14 @@ TTS (`src/speech/tts.py`): `pyttsx3` for offline synthesis; `piper` CLI and `edg
 ## Configuration
 
 All parameters are environment-variable–driven via `.env`: LLM provider, model, API keys, embedding model and URL, batch size, STT model and provider, TTS provider and voice, chunk size, overlap, and top-k retrieval count.
+
+## Observability — `src/tracing.py`
+
+Every query is traced end-to-end using OpenTelemetry and exported to Arize Phoenix (`PHOENIX_COLLECTOR_ENDPOINT`, default `http://localhost:6006/v1/traces`). Two spans are emitted per request:
+
+- **`rag.answer`** (kind: CHAIN) — parent span covering retrieval + generation; records `input.value`, `output.value`, `retrieval.documents` (JSON array with doc/page/score), `retrieval.document_count`, `perf.total_ms`, and `perf.llm_ms`.
+- **`llm.chat`** (kind: LLM) — child span for the LLM call; records `llm.model_name`, `llm.provider`, `input.value`, and `output.value`.
+
+The tracer setup is a no-op when `arize-phoenix-otel` is not installed, so the app runs without Phoenix in environments where it is not needed.
+
+![Phoenix trace — Q-M04 (3.4 s total, 2.8 s LLM)](images/phoenix_trace_qm04.png)
