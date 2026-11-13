@@ -37,6 +37,8 @@ TIVO: TITO pipeline + sentence-chunked text-to-speech synthesis.
 VITO: press-Enter microphone recording → Whisper transcription → TITO.
 VIVO: VITO + TIVO; in-memory history is carried across turns for multi-turn conversations.
 
+![VIVO mode — Q-M04 (VDA/crypto taxation): STT transcription, Rich-styled answer with inline sources](images/vivo_qm04_demo.png)
+
 ## Speech Components
 
 STT (`src/speech/stt.py`): `faster-whisper` for local offline transcription, with Groq and OpenAI Whisper API options. The WhisperModel is loaded once and reused across turns. Temporary WAV files are deleted after transcription.
