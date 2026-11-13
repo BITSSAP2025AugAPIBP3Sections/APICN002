@@ -16,6 +16,14 @@ STOP = set("the a an and or of to in for on is are be with by from as at that th
 EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text:latest")
 EMBED_BASE_URL = os.getenv("EMBED_BASE_URL", "http://localhost:11434/api")
 
+try:
+    from rich.console import Console as _Con
+    _con = _Con()
+    def _info(msg: str) -> None:
+        _con.print(f"[dim]{msg}[/dim]")
+except ImportError:
+    _info = print  # type: ignore[assignment]
+
 
 def _stem(t: str) -> str:
     if len(t) > 3 and t.endswith("s"):
@@ -54,11 +62,11 @@ class Retriever:
                 )
             self.embeddings = emb / (norms.reshape(-1, 1) + 1e-9)
             self.use_embeddings = True
-            print(f"[retriever] embedding mode ({len(self.records)} chunks)")
+            _info(f"[retriever] embedding mode  {len(self.records):,} chunks")
         else:
             self.use_embeddings = False
             self._build_tfidf()
-            print(f"[retriever] TF-IDF mode ({len(self.records)} chunks)")
+            _info(f"[retriever] TF-IDF mode  {len(self.records):,} chunks")
 
     def _build_tfidf(self) -> None:
         postings: dict[str, dict[int, int]] = {}
